@@ -354,13 +354,15 @@ class Tucker_CNN(nn.Module):
         进行常规卷积后，将输出通道进行恢复
     '''
     
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, ranks: tuple, device='cpu', **kwargs):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int, ranks: tuple, device='cuda:0', **kwargs):
         
         '''
             对输入与输出通道数进行降维
             in_channels:  int     输入通道数
             out_channels: int     输出通道数
             kernel_size:  int     模拟卷积核大小
+            stride:       int     卷积步长
+            padding:      int     zero填充数目
             ranks:        tuple   降维参数
             ranks[0]为降维输入通道数
             ranks[1]为降维输出通道数
@@ -372,6 +374,8 @@ class Tucker_CNN(nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
         self.ranks = ranks
         self.device = device
         
@@ -392,7 +396,7 @@ class Tucker_CNN(nn.Module):
             out_channels = self.ranks[1],
             kernel_size = self.kernel_size,
             stride = 1,
-            padding = 0,
+            padding = self.padding,
             bias = False,
             device = self.device
         )
@@ -402,7 +406,7 @@ class Tucker_CNN(nn.Module):
             in_channels = self.ranks[1],
             out_channels = self.out_channels,
             kernel_size = 1,
-            stride = 1,
+            stride = self.stride,
             padding = 0,
             bias = True,
             device = self.device
@@ -427,15 +431,15 @@ class CP_CNN(nn.Module):
         将常规卷积转换为两个方向上的卷积，将输出通道进行恢复
     '''
     
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, rank: int, device='cpu', **kwargs):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int, rank: int, device='cuda:0', **kwargs):
         
         '''
             in_channels:  int     输入通道数
             out_channels: int     输出通道数
             kernel_size:  int     模拟卷积核大小
+            stride:       int     卷积步长
+            padding:      int     zero填充数目
             ranks:        int     降维参数
-            ranks[0]为降维输入通道数
-            ranks[1]为降维输出通道数
             注意，使用该层后，就可以不采用 BN 层了
         '''
         
@@ -444,6 +448,8 @@ class CP_CNN(nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
         self.rank = rank
         self.device = device
         
@@ -464,7 +470,7 @@ class CP_CNN(nn.Module):
             out_channels = self.rank,
             kernel_size = (self.kernel_size, 1),
             stride = 1,
-            padding = 0,
+            padding = (self.padding, 0),
             groups = self.rank,
             bias = False ,
             device = self.device
@@ -476,7 +482,7 @@ class CP_CNN(nn.Module):
             out_channels = self.rank,
             kernel_size = (1, self.kernel_size),
             stride = 1,
-            padding = 0,
+            padding = (0, self.padding),
             groups = self.rank,
             bias = False,
             device = self.device
@@ -487,7 +493,7 @@ class CP_CNN(nn.Module):
             in_channels = self.rank,
             out_channels = self.out_channels,
             kernel_size = 1,
-            stride = 1,
+            stride = self.stride,
             padding = 0,
             bias = True,
             device = self.device
